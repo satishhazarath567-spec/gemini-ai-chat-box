@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyGPT 1.0 - Educational AI</title>
+    <style>
+        :root {
+            --bg: #131314;
+            --input-bg: #1e1f20;
+            --text: #e3e3e3;
+            --user-bubble: #2b2c2e;
+            --accent: #8ab4f8;
+            --error-red: #f28b82;
+            --shadow: rgba(0,0,0,0.5);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            align-items: center;
+        }
+
+        /* StudyGPT Logo - Professional but friendly */
+        header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            border-bottom: 1px solid #2b2c2e;
+        }
+
+        #logo {
+            font-weight: bold;
+            font-size: 20px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #logo-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #e3e3e3);
+            display: flex; align-items: center; justify-content: center; color: white;
+            font-size: 14px; box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        #logo-version { font-weight: 300; font-size: 14px; color: #9aa0a6; }
+
+        /* Chat History - Widely Centered like Gemini */
+        #chat-window {
+            flex: 1;
+            width: 100%;
+            max-width: 800px;
+            overflow-y: auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            scroll-behavior: smooth;
+        }
+
+        .message { max-width: 85%; line-height: 1.7; font-size: 16px; word-wrap: break-word; }
+
+        .user-msg {
+            align-self: flex-end;
+            background-color: var(--user-bubble);
+            padding: 12px 24px;
+            border-radius: 28px;
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .ai-msg { align-self: flex-start; white-space: pre-wrap; color: var(--text); }
+        .ai-msg a { color: var(--accent); } /* Make links clickable */
+
+        /* Input Area - Floats at the Bottom */
+        .input-wrapper {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px 20px 40px 20px;
+            box-sizing: border-box;
+            background-color: var(--bg);
+            position: sticky; bottom: 0;
+        }
+
+        .input-pill {
+            background-color: var(--input-bg);
+            border-radius: 36px;
+            display: flex;
+            align-items: center;
+            padding: 8px 20px;
+            border: 1px solid transparent;
+            transition: border 0.2s;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .input-pill:focus-within { border: 1px solid #5f6368; }
+
+        input[type="text"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 14px;
+            font-size: 17px;
+            outline: none;
+        }
+
+        .icon-btn {
+            background: none; border: none; color: #9aa0a6;
+            cursor: pointer; font-size: 22px; padding: 10px;
+            display: flex; align-items: center;
+        }
+        
+        .icon-btn svg { fill: currentColor; width: 24px; height: 24px; }
+
+        .send-btn { color: var(--accent); font-weight: bold; margin-left: 10px; }
+
+        #image-preview-note { color: var(--accent); font-size: 12px; margin-bottom: 8px; padding-left: 20px; }
+
+        /* Scrollbar styling */
+        #chat-window::-webkit-scrollbar { width: 4px; }
+        #chat-window::-webkit-scrollbar-thumb { background: #333; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div id="logo">
+            <div id="logo-icon">SG</div>
+            StudyGPT <span id="logo-version">1.0 Flash</span>
+        </div>
+        <div class="user-initials" style="background: #3c4043; padding: 8px 12px; border-radius: 50%; font-size: 12px;">S</div>
+    </header>
+
+    <div id="chat-window">
+        <div class="message ai-msg">Hello. How can I help your studies today? You can type your question or upload a diagram.</div>
+    </div>
+
+    <div class="input-wrapper">
+        <div id="image-preview-note"></div>
+        <div class="input-pill">
+            
+            <input type="file" id="image-input" hidden accept="image/*" onchange="previewImage(this)">
+            
+            <button class="icon-btn" onclick="document.getElementById('image-input').click()" title="Upload a diagram">
+                <svg viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v10.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.31 2.69 6 6 6s6-2.69 6-6V6h-1.5z"/></svg>
+            </button>
+
+            <input type="text" id="user-input" placeholder="Enter a prompt here..." autocomplete="off">
+            
+            <button class="icon-btn send-btn" onclick="send()">Send</button>
+        </div>
+        <p style="font-size: 12px; color: #80868b; text-align: center; margin-top: 15px;">
+            StudyGPT may display inaccurate info, so double-check its responses.
+        </p>
+    </div>
+
+    <script>
+        // Shows the filename after an image is selected
+        function previewImage(input) {
+            const label = document.getElementById('image-preview-note');
+            if (input.files && input.files[0]) {
+                label.innerText = `Image Selected: ${input.files[0].name}`;
+            } else {
+                label.innerText = "";
+            }
+        }
+
+        async function send() {
+            const input = document.getElementById('user-input');
+            const chat = document.getElementById('chat-window');
+            const imageIn = document.getElementById('image-input');
+            const msgVal = input.value.trim();
+            const imageFile = imageIn.files[0];
+            
+            // 1. Validation - Do nothing if both are empty
+            if (!msgVal && !imageFile) return;
+
+            // 2. Clear inputs and preview immediately for that fast feel
+            input.value = "";
+            imageIn.value = "";
+            document.getElementById('image-preview-note').innerText = "";
+
+            // 3. UI: Add User Message and setup AI placeholder
+            chat.innerHTML += `<div class="message user-msg">${msgVal || "(Sent a Diagram)"}</div>`;
+            const aiDiv = document.createElement("div");
+            aiDiv.className = "message ai-msg";
+            chat.appendChild(aiDiv);
+            chat.scrollTop = chat.scrollHeight; // Auto-scroll
+            
+            // 4. Prepare Multipart Form Data
+            const fd = new FormData();
+            fd.append('msg', msgVal);
+            if(imageFile) fd.append('image', imageFile);
+
+            // 5. Fetch Streaming Response from Flask
+            try {
+                const res = await fetch('/chat', { method: 'POST', body: fd });
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    fullText += chunk;
+
+                    // 6. CHECK VALIDATION: If AI says NOT_VALID_PROMPT, stop and show error
+                    if (fullText.includes("NOT_VALID_PROMPT")) {
+                        aiDiv.innerHTML = `<span style="color:var(--error-red); border: 1px solid var(--error-red); padding: 8px 12px; border-radius: 8px;">⚠️ Not a valid educational request.</span>`;
+                        return; // Stop the function here
+                    }
+
+                    // 7. Update UI with the chunk (streaming text)
+                    aiDiv.innerText = fullText;
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            } catch (e) {
+                aiDiv.innerText = "Error connecting to the server. Is your Python app running?";
+            }
+        }
+
+        // Handle 'Enter' key press
+        document.getElementById('user-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') send();
+        });
+    </script>
+</body>
+</html>
